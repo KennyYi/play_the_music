@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -11,8 +11,12 @@ import { Dice4Icon, Dice5Icon, Dice6Icon } from "lucide-react";
 import React from "react";
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
 import { Button } from "@/components/ui/button";
+import { pickRandom } from "@/lib/utils";
+import { useMusic } from "@/context/MusicContext";
 
 const SelectPage: React.FC = () => {
+  const { fetchMusic } = useMusic();
+
   const [genres, setGenres] = useState<GenreEntry[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<GenreEntry | undefined>();
 
@@ -25,6 +29,15 @@ const SelectPage: React.FC = () => {
     });
   }, []);
 
+  const handleGenreChange = useCallback(
+    async (genre: GenreEntry) => {
+      setSelectedGenre(genre);
+      const music = pickRandom(genre.songs);
+      if (music) fetchMusic(music.id);
+    },
+    [setSelectedGenre]
+  );
+
   return (
     <div className="p-6 items-center justify-center flex flex-col">
       <div className="flex flex-row gap-4 w-full justify-items-end">
@@ -33,7 +46,7 @@ const SelectPage: React.FC = () => {
             value={selectedGenre?.genre ?? ""}
             onValueChange={(value) => {
               const selected = genres.find((genre) => genre.genre === value);
-              if (selected) setSelectedGenre(selected);
+              if (selected) handleGenreChange(selected);
             }}
           >
             <div className="flex flex-col gap-2 items-start">
@@ -64,7 +77,10 @@ const SelectPage: React.FC = () => {
             <div className="w-inherit justify-items-center">
               <Button
                 onClick={() => {
-                  console.log("Random music");
+                  if (genres.length > 0) {
+                    const randomGenre = pickRandom(genres);
+                    if (randomGenre) handleGenreChange(randomGenre);
+                  }
                 }}
               >
                 <Dice6Icon />
