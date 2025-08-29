@@ -1,4 +1,5 @@
 export interface Track {
   audioUrl: string;
-  title: string;
+  fileName: string;
+  coverArtUrl: string | null;
 }

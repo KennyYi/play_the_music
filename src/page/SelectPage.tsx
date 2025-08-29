@@ -33,7 +33,9 @@ const SelectPage: React.FC = () => {
     async (genre: GenreEntry) => {
       setSelectedGenre(genre);
       const music = pickRandom(genre.songs);
-      if (music) fetchMusic(music.id);
+      if (music) {
+        await fetchMusic(music.id);
+      }
     },
     [setSelectedGenre]
   );
