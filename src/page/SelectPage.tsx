@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  Dice4Icon,
-  Dice5Icon,
-  Dice6Icon,
-  PlayCircleIcon,
-  PauseCircleIcon,
-} from "lucide-react";
+import { Dice4Icon, Dice5Icon, Dice6Icon } from "lucide-react";
 import React from "react";
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
 import { Button } from "@/components/ui/button";
 import { pickRandom } from "@/lib/utils";
 import { useMusic } from "@/context/MusicContext";
+import MusicController from "@/components/ui/musicController";
 
 const SelectPage: React.FC = () => {
   const { track, fetchMusic, play, pause, stop, isPlaying } = useMusic();
@@ -35,7 +30,7 @@ const SelectPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-6 items-center justify-center flex flex-col">
+    <div className="p-6 items-center justify-center flex flex-col gap-10">
       <div className="flex flex-col flex-1 gap-2">
         <div className="text-lg text-gray-500">Play random music</div>
         <div className="w-inherit justify-items-center">
@@ -54,13 +49,14 @@ const SelectPage: React.FC = () => {
         </div>
       </div>
       {track && (
-        <Button
-          onClick={() => (isPlaying ? pause() : play())}
-          size="icon"
-          className="size-8"
-        >
-          {isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
-        </Button>
+        <MusicController
+          isPlaying={isPlaying ?? false}
+          pause={pause}
+          play={play}
+          stop={stop}
+          skipBack={() => {}}
+          skipForward={() => {}}
+        />
       )}
     </div>
   );
