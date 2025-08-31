@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import React from "react";
 
 import {
@@ -6,10 +7,13 @@ import {
   PlayCircleIcon,
   PauseCircleIcon,
   StopCircleIcon,
+  ShuffleIcon,
 } from "lucide-react";
 
 interface MusicControllerProps {
   isPlaying: boolean;
+  disabled: boolean;
+  random: () => void;
   play: () => void;
   pause: () => void;
   stop: () => void;
@@ -19,12 +23,18 @@ interface MusicControllerProps {
 
 const ControlButton: React.FC<{
   onClick: () => void;
+  disabled: boolean;
   icon: React.ReactNode;
-}> = ({ onClick, icon }) => {
+}> = ({ onClick, icon, disabled }) => {
   return (
     <div
-      onClick={onClick}
-      className="inline-flex cursor-pointer p-2 rounded-md border hover:bg-accent"
+      onClick={disabled ? undefined : onClick}
+      className={cn(
+        "inline-flex p-2 rounded-md border",
+        disabled
+          ? "cursor-not-allowed bg-gray-100"
+          : "cursor-pointer hover:bg-slate-50"
+      )}
     >
       {icon}
     </div>
@@ -32,17 +42,51 @@ const ControlButton: React.FC<{
 };
 
 const MusicController = React.memo<MusicControllerProps>(
-  ({ isPlaying, play, pause, stop, skipForward, skipBack }) => {
+  ({
+    isPlaying,
+    disabled,
+    random,
+    play,
+    pause,
+    stop,
+    skipForward,
+    skipBack,
+  }) => {
     return (
       <div className="flex items-center space-x-4 gap-4">
-        <ControlButton onClick={skipBack} icon={<UndoDotIcon />} />
+        <ControlButton
+          onClick={skipBack}
+          icon={<UndoDotIcon />}
+          disabled={disabled}
+        />
+        <ControlButton
+          onClick={random}
+          icon={<ShuffleIcon />}
+          disabled={false}
+        />
         {isPlaying ? (
-          <ControlButton onClick={pause} icon={<PauseCircleIcon />} />
+          <ControlButton
+            onClick={pause}
+            icon={<PauseCircleIcon />}
+            disabled={disabled}
+          />
         ) : (
-          <ControlButton onClick={play} icon={<PlayCircleIcon />} />
+          <ControlButton
+            onClick={play}
+            icon={<PlayCircleIcon />}
+            disabled={disabled}
+          />
         )}
-        <ControlButton onClick={stop} icon={<StopCircleIcon />} />
-        <ControlButton onClick={skipForward} icon={<RedoDotIcon />} />
+        <ControlButton
+          onClick={stop}
+          icon={<StopCircleIcon />}
+          disabled={disabled}
+        />
+        <ControlButton
+          onClick={skipForward}
+          icon={<RedoDotIcon />}
+          disabled={disabled}
+        />
       </div>
     );
   }

@@ -15,6 +15,8 @@ interface MusicContextType {
   play: () => void;
   pause: () => void;
   stop: () => void;
+  skipBack: () => void;
+  skipForward: () => void;
   onPlaybackStatusChange: (callback: (isPlaying: boolean) => void) => void;
   onMusicEnd: (callback: () => void) => void;
   volume: number;
@@ -29,6 +31,8 @@ const MusicContext = createContext<MusicContextType>({
   play: () => {},
   pause: () => {},
   stop: () => {},
+  skipBack: () => {},
+  skipForward: () => {},
   onPlaybackStatusChange: () => {},
   onMusicEnd: () => {},
   volume: 1.0,
@@ -123,6 +127,21 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
             if (audio) {
               audio.pause();
               audio.currentTime = 0;
+            }
+          },
+          skipBack: () => {
+            const audio = audioRef.current;
+            if (audio) {
+              audio.currentTime = Math.max(0, audio.currentTime - 10);
+            }
+          },
+          skipForward: () => {
+            const audio = audioRef.current;
+            if (audio) {
+              audio.currentTime = Math.min(
+                audio.duration,
+                audio.currentTime + 10
+              );
             }
           },
           onPlaybackStatusChange: () => {},
