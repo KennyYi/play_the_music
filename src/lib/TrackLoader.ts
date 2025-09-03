@@ -1,5 +1,6 @@
 import { extractCoverArt } from "@/utils/extractCoverArt";
 import { Track } from "./types";
+import { analyzeFile } from "@/analysis/audioAnalysis";
 
 export async function loadTrack(musicFile: File): Promise<Track> {
   const url = URL.createObjectURL(musicFile);
@@ -12,7 +13,7 @@ export async function loadTrack(musicFile: File): Promise<Track> {
   reader.readAsDataURL(musicFile);
   const coverArtUrl = await extractCoverArt(musicFile);
 
-  // TODO
+  const analysisResult = await analyzeFile(musicFile);
 
   console.log("Audio URL:", url);
   console.log("File Name:", musicFile.name);
@@ -22,5 +23,6 @@ export async function loadTrack(musicFile: File): Promise<Track> {
     audioUrl: url,
     fileName: musicFile.name,
     coverArtUrl: coverArtUrl,
+    analysisResult: analysisResult,
   });
 }
