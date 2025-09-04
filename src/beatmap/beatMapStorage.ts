@@ -1,5 +1,5 @@
 import type { BeatMap } from "./beatMapSchema";
-import type { AnalysisResult } from "../analysis/analysisMessage.js";
+import type { AnalysisResult } from "../analysis//analysisMessage.js";
 import type { BeatMapVariations } from "./beatMapGenerator";
 // @ts-ignore - TypeScript resolves this import during build
 import { validateBeatMap } from "./beatMapSchema.js";

@@ -34,7 +34,7 @@ const SelectPage: React.FC = () => {
         setIsFetching(false);
       }
     }
-  }, [isPlaying, stop, play, setIsFetching]);
+  }, [genres, isPlaying, stop, play, setIsFetching]);
 
   return (
     <div className="p-6 items-center justify-center flex flex-col gap-10">

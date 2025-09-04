@@ -1,5 +1,5 @@
 // @ts-ignore - TypeScript resolves this import during build
-import { detectBeats, mapBeatsToLanes, applyOffset } from "./beatDetector.js";
+import { detectBeats, mapBeatsToLanes, applyOffset } from "./beatMapDetector";
 import type { BeatMap } from "./beatMapSchema";
 
 /**
