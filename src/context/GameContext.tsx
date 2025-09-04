@@ -10,15 +10,19 @@ export const DEFAULT_KEYSET = {
 interface GameContextType {
   level: Difficulty;
   setLevel: (level: Difficulty) => void;
-  keyset: string[];
-  setKeyset: (keyset: string[]) => void;
+  laneKeys: string[];
+  setLaneKeys: (keyset: string[]) => void;
+  score: number | null;
+  setScore: (score: number | null) => void;
 }
 
 const GameContext = createContext<GameContextType>({
   level: Difficulty.Easy,
   setLevel: () => {},
-  keyset: DEFAULT_KEYSET[Difficulty.Easy],
-  setKeyset: () => {},
+  laneKeys: DEFAULT_KEYSET[Difficulty.Easy],
+  setLaneKeys: () => {},
+  score: null,
+  setScore: () => {},
 });
 
 export function useGame(): GameContextType {
@@ -29,12 +33,15 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
   children,
 }) => {
   const [level, setLevel] = useState<Difficulty>(Difficulty.Easy);
-  const [keyset, setKeyset] = useState<string[]>(
+  const [laneKeys, setLaneKeys] = useState<string[]>(
     DEFAULT_KEYSET[Difficulty.Easy]
   );
+  const [score, setScore] = useState<number | null>(null);
 
   return (
-    <GameContext.Provider value={{ level, setLevel, keyset, setKeyset }}>
+    <GameContext.Provider
+      value={{ level, setLevel, laneKeys, setLaneKeys, score, setScore }}
+    >
       {children}
     </GameContext.Provider>
   );

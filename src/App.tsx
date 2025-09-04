@@ -1,12 +1,15 @@
 import "./App.css";
+import { GameContextProvider } from "./context/GameContext";
 import { MusicContextProvider } from "./context/MusicContext";
-import SelectPage from "./page/SelectPage";
+import MainPage from "./page/MainPage";
 
 function App() {
   return (
-    <MusicContextProvider>
-      <SelectPage />
-    </MusicContextProvider>
+    <GameContextProvider>
+      <MusicContextProvider>
+        <MainPage />
+      </MusicContextProvider>
+    </GameContextProvider>
   );
 }
 

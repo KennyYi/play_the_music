@@ -23,6 +23,8 @@ interface MusicContextType {
   setVolume: (volume: number) => void;
   mute: () => void;
   isPlaying?: boolean;
+  duration: number;
+  currentTime: number;
 }
 
 const MusicContext = createContext<MusicContextType>({
@@ -38,6 +40,8 @@ const MusicContext = createContext<MusicContextType>({
   volume: 1.0,
   setVolume: () => {},
   mute: () => {},
+  duration: 0,
+  currentTime: 0,
 });
 
 export function useMusic(): MusicContextType {
@@ -150,6 +154,8 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
           setVolume: handleVolumeChange,
           mute: () => handleVolumeChange(0),
           isPlaying: !!(audioRef.current && !audioRef.current.paused),
+          duration,
+          currentTime,
         } as MusicContextType
       }
     >

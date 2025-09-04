@@ -2,13 +2,23 @@ import { useCallback, useEffect, useState } from "react";
 
 import React from "react";
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
-import { pickRandom } from "@/lib/utils";
+import { formatDuration, pickRandom } from "@/lib/utils";
 import { useMusic } from "@/context/MusicContext";
 import MusicController from "@/components/ui/musicController";
 
-const SelectPage: React.FC = () => {
-  const { fetchMusic, play, pause, stop, isPlaying, skipBack, skipForward } =
-    useMusic();
+const MainPage: React.FC = () => {
+  const {
+    fetchMusic,
+    play,
+    pause,
+    stop,
+    isPlaying,
+    skipBack,
+    skipForward,
+    track,
+    currentTime,
+    duration,
+  } = useMusic();
   const [genres, setGenres] = useState<GenreEntry[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
@@ -48,8 +58,13 @@ const SelectPage: React.FC = () => {
         skipBack={skipBack}
         skipForward={skipForward}
       />
+      {track && !isFetching && (
+        <>
+          {formatDuration(currentTime)}/{formatDuration(duration)}
+        </>
+      )}
     </div>
   );
 };
 
-export default SelectPage;
+export default MainPage;
