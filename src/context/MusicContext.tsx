@@ -25,6 +25,7 @@ interface MusicContextType {
   isPlaying?: boolean;
   duration: number;
   currentTime: number;
+  audioRef?: React.RefObject<HTMLAudioElement>;
 }
 
 const MusicContext = createContext<MusicContextType>({
@@ -156,6 +157,7 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
           isPlaying: !!(audioRef.current && !audioRef.current.paused),
           duration,
           currentTime,
+          audioRef,
         } as MusicContextType
       }
     >

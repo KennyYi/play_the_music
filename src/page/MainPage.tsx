@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import React from "react";
+import { Application } from "pixi.js";
+
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
 import { formatDuration, pickRandom } from "@/lib/utils";
 import { useMusic } from "@/context/MusicContext";
 import MusicController from "@/components/ui/musicController";
+import { GameBoard } from "./GameBoard";
 
 const MainPage: React.FC = () => {
   const {
@@ -18,9 +20,13 @@ const MainPage: React.FC = () => {
     track,
     currentTime,
     duration,
+    audioRef,
   } = useMusic();
   const [genres, setGenres] = useState<GenreEntry[]>([]);
   const [isFetching, setIsFetching] = useState(false);
+
+  const appRef = useRef<Application | null>(null);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
     const fetcher = new GenreScriptFetcher();
@@ -46,8 +52,28 @@ const MainPage: React.FC = () => {
     }
   }, [genres, isPlaying, stop, play, setIsFetching]);
 
+  useEffect(() => {
+    const initializeApp = async () => {
+      const app = new Application();
+      await app.init({ background: "#1099bb" });
+
+      appRef.current = app;
+      setIsAppReady(true);
+    };
+
+    initializeApp();
+
+    return () => {
+      if (appRef.current) {
+        appRef.current.destroy(true, { children: true });
+        appRef.current = null;
+      }
+      setIsAppReady(false);
+    };
+  }, []);
+
   return (
-    <div className="p-6 items-center justify-center flex flex-col gap-10">
+    <div className="items-center flex flex-col gap-10">
       <MusicController
         isPlaying={isPlaying ?? false}
         disabled={isFetching}
@@ -62,6 +88,9 @@ const MainPage: React.FC = () => {
         <>
           {formatDuration(currentTime)}/{formatDuration(duration)}
         </>
+      )}
+      {audioRef && isAppReady && (
+        <GameBoard appRef={appRef} audioRef={audioRef} latency={0} />
       )}
     </div>
   );

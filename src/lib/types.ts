@@ -1,4 +1,5 @@
 import { AnalysisResult } from "@/analysis/analysisMessage";
+import { BeatMapVariations } from "@/beatmap/beatMapGenerator";
 
 export enum Difficulty {
   Easy = "easy",
@@ -12,4 +13,5 @@ export interface Track {
   coverArtUrl: string | null;
   waveFormData?: Float32Array;
   analysisResult?: AnalysisResult;
+  beatMaps?: BeatMapVariations;
 }
