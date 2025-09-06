@@ -2,11 +2,15 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Application } from "pixi.js";
 
+import { SettingsIcon } from "lucide-react";
+
+import logo from "@/assets/logo.png";
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
 import { formatDuration, pickRandom } from "@/lib/utils";
 import { useMusic } from "@/context/MusicContext";
 import MusicController from "@/components/ui/musicController";
 import { GameBoard } from "./GameBoard";
+import { ControlButton } from "@/components/ui/ControlButton";
 
 const MainPage: React.FC = () => {
   const {
@@ -55,7 +59,7 @@ const MainPage: React.FC = () => {
   useEffect(() => {
     const initializeApp = async () => {
       const app = new Application();
-      await app.init({ background: "#1099bb" });
+      await app.init({ background: "white" });
 
       appRef.current = app;
       setIsAppReady(true);
@@ -74,21 +78,25 @@ const MainPage: React.FC = () => {
 
   return (
     <div className="items-center flex flex-col gap-10">
-      <MusicController
-        isPlaying={isPlaying ?? false}
-        disabled={isFetching}
-        random={handleRandomPlay}
-        pause={pause}
-        play={play}
-        stop={stop}
-        skipBack={skipBack}
-        skipForward={skipForward}
-      />
-      {track && !isFetching && (
-        <>
-          {formatDuration(currentTime)}/{formatDuration(duration)}
-        </>
-      )}
+      <div className="flex flex-row w-full items-center gap-4">
+        <img src={logo} className="h-16" />
+        <div className="flex-1 items-center justify-center flex">
+          <MusicController
+            isPlaying={isPlaying ?? false}
+            disabled={!track || isFetching}
+            loading={isFetching}
+            pickRandomMusic={handleRandomPlay}
+            pause={pause}
+            play={play}
+            stop={stop}
+            skipBack={skipBack}
+            skipForward={skipForward}
+          />
+        </div>
+        <div>
+          <ControlButton onClick={() => {}} icon={<SettingsIcon />} />
+        </div>
+      </div>
       {audioRef && isAppReady && (
         <GameBoard appRef={appRef} audioRef={audioRef} latency={0} />
       )}

@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import React from "react";
 
 import {
@@ -7,13 +6,16 @@ import {
   PlayCircleIcon,
   PauseCircleIcon,
   StopCircleIcon,
-  ShuffleIcon,
+  Music4Icon,
+  LoaderCircleIcon,
 } from "lucide-react";
+import { ControlButton } from "./ControlButton";
 
 interface MusicControllerProps {
   isPlaying: boolean;
   disabled: boolean;
-  random: () => void;
+  loading: boolean;
+  pickRandomMusic: () => void;
   play: () => void;
   pause: () => void;
   stop: () => void;
@@ -21,31 +23,12 @@ interface MusicControllerProps {
   skipBack: () => void;
 }
 
-const ControlButton: React.FC<{
-  onClick: () => void;
-  disabled: boolean;
-  icon: React.ReactNode;
-}> = ({ onClick, icon, disabled }) => {
-  return (
-    <div
-      onClick={disabled ? undefined : onClick}
-      className={cn(
-        "inline-flex p-2 rounded-md border",
-        disabled
-          ? "cursor-not-allowed bg-gray-100"
-          : "cursor-pointer hover:bg-slate-50"
-      )}
-    >
-      {icon}
-    </div>
-  );
-};
-
 const MusicController = React.memo<MusicControllerProps>(
   ({
     isPlaying,
     disabled,
-    random,
+    loading,
+    pickRandomMusic,
     play,
     pause,
     stop,
@@ -53,39 +36,47 @@ const MusicController = React.memo<MusicControllerProps>(
     skipBack,
   }) => {
     return (
-      <div className="flex items-center space-x-4 gap-4">
+      <div className="flex items-center space-between gap-2">
+        <ControlButton
+          onClick={pickRandomMusic}
+          icon={<Music4Icon />}
+          loadingIcon={<LoaderCircleIcon />}
+          disabled={false}
+          loading={loading}
+          variant="primary"
+        />
         <ControlButton
           onClick={skipBack}
           icon={<UndoDotIcon />}
           disabled={disabled}
-        />
-        <ControlButton
-          onClick={random}
-          icon={<ShuffleIcon />}
-          disabled={false}
+          loading={loading}
         />
         {isPlaying ? (
           <ControlButton
             onClick={pause}
             icon={<PauseCircleIcon />}
             disabled={disabled}
+            loading={loading}
           />
         ) : (
           <ControlButton
             onClick={play}
             icon={<PlayCircleIcon />}
             disabled={disabled}
+            loading={loading}
           />
         )}
         <ControlButton
           onClick={stop}
           icon={<StopCircleIcon />}
           disabled={disabled}
+          loading={loading}
         />
         <ControlButton
           onClick={skipForward}
           icon={<RedoDotIcon />}
           disabled={disabled}
+          loading={loading}
         />
       </div>
     );

@@ -2,7 +2,7 @@ import { useGame } from "@/context/GameContext";
 import { useMusic } from "@/context/MusicContext";
 import { NoteSpawner } from "@/utils/noteSpawner";
 import React, { useEffect, useRef } from "react";
-import { Application } from "pixi.js";
+import { Application, Filter, Graphics, Ticker } from "pixi.js";
 
 interface GameBoardProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -44,5 +44,5 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   }, [track, level]);
 
   // TODO
-  return <div className="w-full h-200" ref={canvasRef} />;
+  return <div className="w-full h-200 border border-black" ref={canvasRef} />;
 };
