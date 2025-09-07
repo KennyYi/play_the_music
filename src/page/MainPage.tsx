@@ -11,6 +11,23 @@ import { useMusic } from "@/context/MusicContext";
 import MusicController from "@/components/ui/musicController";
 import { GameBoard } from "./GameBoard";
 import { ControlButton } from "@/components/ui/ControlButton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { useGame } from "@/context/GameContext";
+import { Difficulty } from "@/lib/types";
+import { Input } from "@/components/ui/input";
 
 const MainPage: React.FC = () => {
   const {
@@ -26,6 +43,7 @@ const MainPage: React.FC = () => {
     duration,
     audioRef,
   } = useMusic();
+  const { level, setLevel, laneKeys, setLaneKeys } = useGame();
   const [genres, setGenres] = useState<GenreEntry[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
@@ -94,7 +112,56 @@ const MainPage: React.FC = () => {
           />
         </div>
         <div>
-          <ControlButton onClick={() => {}} icon={<SettingsIcon />} />
+          <Dialog>
+            <DialogTrigger>
+              <ControlButton onClick={() => {}} icon={<SettingsIcon />} />
+            </DialogTrigger>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Settings</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Level</Label>
+                  <Select
+                    onValueChange={(value) => setLevel(value as Difficulty)}
+                    value={level}
+                  >
+                    <SelectTrigger>{level}</SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value={Difficulty.Easy}>
+                        {Difficulty.Easy}
+                      </SelectItem>
+                      <SelectItem value={Difficulty.Normal}>
+                        {Difficulty.Normal}
+                      </SelectItem>
+                      <SelectItem value={Difficulty.Hard}>
+                        {Difficulty.Hard}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Lane Keys</Label>
+                  {laneKeys.map((key, index) => {
+                    return (
+                      <Input
+                        key={index}
+                        value={key}
+                        onChange={(e) => {
+                          const newKeys = [...laneKeys];
+                          newKeys[index] = e.target.value
+                            .toUpperCase()
+                            .slice(-1);
+                          setLaneKeys(newKeys);
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       {audioRef && isAppReady && (
