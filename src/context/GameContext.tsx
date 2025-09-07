@@ -13,8 +13,15 @@ export const DEFAULT_KEYSET = {
   [Difficulty.Hard]: ["A", "S", "D", "J", "K", "L"],
 };
 
+export const DEFAULT_LEADTIME = {
+  [Difficulty.Easy]: 2000,
+  [Difficulty.Normal]: 1500,
+  [Difficulty.Hard]: 1000,
+};
+
 interface GameContextType {
   level: Difficulty;
+  leadTime: number;
   setLevel: (level: Difficulty) => void;
   laneKeys: string[];
   setLaneKeys: (keyset: string[]) => void;
@@ -24,6 +31,7 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType>({
   level: Difficulty.Easy,
+  leadTime: DEFAULT_LEADTIME[Difficulty.Easy],
   setLevel: () => {},
   laneKeys: DEFAULT_KEYSET[Difficulty.Easy],
   setLaneKeys: () => {},
@@ -44,6 +52,8 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
 
   const [score, setScore] = useState<number | null>(null);
 
+  const leadTime = useMemo(() => DEFAULT_LEADTIME[level], [level]);
+
   const handleSetLaneKeys = useCallback(
     (keys: string[]) => {
       setLaneKeyMap((prev) => {
@@ -61,6 +71,7 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
     <GameContext.Provider
       value={{
         level,
+        leadTime,
         setLevel,
         laneKeys,
         setLaneKeys: handleSetLaneKeys,

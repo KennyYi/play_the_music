@@ -6,7 +6,7 @@ import { SettingsIcon } from "lucide-react";
 
 import logo from "@/assets/logo.png";
 import { GenreEntry, GenreScriptFetcher } from "@/lib/GenreFetcher";
-import { formatDuration, pickRandom } from "@/lib/utils";
+import { pickRandom } from "@/lib/utils";
 import { useMusic } from "@/context/MusicContext";
 import MusicController from "@/components/ui/musicController";
 import { GameBoard } from "./GameBoard";
@@ -39,8 +39,6 @@ const MainPage: React.FC = () => {
     skipBack,
     skipForward,
     track,
-    currentTime,
-    duration,
     audioRef,
   } = useMusic();
   const { level, setLevel, laneKeys, setLaneKeys } = useGame();
