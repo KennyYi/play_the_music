@@ -12,6 +12,7 @@ import {
   saveAnalysisResult,
   loadAnalysisResult,
 } from "../beatmap/beatMapStorage";
+import { Difficulty } from "@/lib/types";
 
 export const analysisSupported =
   typeof Worker !== "undefined" &&
@@ -36,7 +37,8 @@ function getAnalysisWorker() {
 }
 
 export async function analyzeFile(
-  file: File
+  file: File,
+  level: Difficulty
 ): Promise<AnalysisResult & { beatMaps: BeatMapVariations }> {
   const id = `${file.name}-${file.size}-${file.lastModified}`;
   const cached = await loadAnalysisResult(id);
@@ -48,7 +50,8 @@ export async function analyzeFile(
   const channelData = audioBuffer.getChannelData(0);
   const beatMaps = generateBeatMapVariations(
     channelData,
-    audioBuffer.sampleRate
+    audioBuffer.sampleRate,
+    level
   );
 
   if (!analysisSupported) {

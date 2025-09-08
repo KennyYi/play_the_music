@@ -28,6 +28,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     []
   );
   const allNotesRef = useRef<{ sprite: any; time: number; lane: number }[]>([]);
+  const particlesRef = useRef<
+    {
+      gfx: any;
+      vx: number;
+      vy: number;
+      life: number;
+    }[]
+  >([]);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
@@ -44,12 +52,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [canvasRef, appRef]);
 
-  const resetNotes = useCallback(() => {
+  useEffect(() => {
     const app = appRef.current;
-    const audio = audioRef.current;
-    if (!app || !audio || !track?.beatMaps) return;
+    if (!app || !track?.beatMaps) return;
+
+    app.stage.removeChildren();
+    allNotesRef.current = [];
+    activeNotesRef.current = [];
     spawnIndexRef.current = 0;
-    const active = activeNotesRef.current;
 
     const beatMap = track.beatMaps[level];
     const laneWidth = app.canvas.width / laneKeys.length;
@@ -77,6 +87,25 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
     spawnerRef.current = new NoteSpawner(beatMap);
 
+    return () => {
+      if (app.stage) {
+        app.stage.removeChildren();
+      }
+      allNotesRef.current = [];
+      activeNotesRef.current = [];
+      spawnerRef.current = null;
+      spawnIndexRef.current = 0;
+    };
+  }, [appRef, track, level, laneKeys, leadTime]);
+
+  useEffect(() => {
+    const app = appRef.current;
+    const audio = audioRef.current;
+
+    if (!app || !audio || !spawnerRef.current) return;
+    const allNotes = allNotesRef.current;
+    const active = activeNotesRef.current;
+
     const Tick = () => {
       const current = audio.currentTime + latency;
       const spawner = spawnerRef.current;
@@ -85,7 +114,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       const newNotes = spawner.update(current);
       for (let i = 0; i < newNotes.length; i++) {
         const note = allNotes[spawnIndexRef.current];
-        note.sprite.visible = false;
+        note.sprite.visible = true;
         active.push(note);
         spawnIndexRef.current += 1;
       }
@@ -97,39 +126,38 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const timeToHit = note.time - current;
         const progress = 1 - timeToHit / (leadTime / 1000);
         note.sprite.y =
-          spawnYRef.current + (height - 100 - spawnYRef.current) * progress;
+          spawnYRef.current + (height - spawnYRef.current) * progress;
         if (progress >= 1) {
           note.sprite.visible = false;
           active.splice(i, 1);
-          // TODO: Missed note handling
+
+          const particles = particlesRef.current;
+          for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.gfx.x += p.vx;
+            p.gfx.y += p.vy;
+            p.life -= 0.02;
+            p.gfx.alpha = p.life;
+            if (p.life <= 0) {
+              app.stage.removeChild(p.gfx);
+              particles.splice(i, 1);
+            }
+          }
         }
       }
-
-      app.ticker.add(Tick);
-      return () => {
-        app.ticker.remove(Tick);
-        for (const note of allNotes) {
-          app.stage.removeChild(note.sprite);
-          note.sprite.destroy();
-        }
-        allNotes.forEach((note) => app.stage.removeChild(note.sprite));
-        allNotes.length = 0;
-        active.length = 0;
-        app.stage.removeChild(hitline);
-        hitline.destroy();
-        spawnerRef.current = null;
-        spawnIndexRef.current = 0;
-        setScore(0);
-      };
     };
-  }, [appRef, track, level, leadTime, spawnerRef, spawnIndexRef]);
 
-  useEffect(() => {
-    if (track) {
-      console.log("aaa");
-      resetNotes();
+    if (isPlaying) {
+      app.ticker.add(Tick);
     }
-  }, [track]);
+
+    return () => {
+      app.ticker.remove(Tick);
+      particlesRef.current.forEach((p) => app.stage.removeChild(p.gfx));
+      particlesRef.current.length = 0;
+      setScore(0);
+    };
+  }, [appRef, audioRef, latency, leadTime, isPlaying]);
 
   return <div className="w-full h-200 border border-black" ref={canvasRef} />;
 };

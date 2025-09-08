@@ -23,11 +23,12 @@ export function detectBeats(
 
 export function mapBeatsToLanes(
   beats: number[],
+  numberOfLanes: number,
   rng: () => number = Math.random
 ): BeatNote[] {
   return beats.map((time) => ({
     time,
-    lane: Math.floor(rng() * 4) as Lane,
+    lane: Math.floor(rng() * numberOfLanes) as Lane,
   }));
 }
 

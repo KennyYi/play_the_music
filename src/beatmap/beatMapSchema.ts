@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-export type Lane = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type Lane = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface BeatNote {
   /**
@@ -43,7 +43,7 @@ export const beatMapSchema = {
         required: ["time", "lane"],
         properties: {
           time: { type: "number", minimum: 0 },
-          lane: { type: "integer", minimum: 0, maximum: 3 },
+          lane: { type: "integer", minimum: 0, maximum: 5 },
         },
         additionalProperties: false,
       },

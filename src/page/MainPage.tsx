@@ -163,7 +163,12 @@ const MainPage: React.FC = () => {
         </div>
       </div>
       {audioRef && isAppReady && (
-        <GameBoard appRef={appRef} audioRef={audioRef} latency={0} />
+        <GameBoard
+          appRef={appRef}
+          audioRef={audioRef}
+          latency={0}
+          isPlaying={isPlaying ?? false}
+        />
       )}
     </div>
   );

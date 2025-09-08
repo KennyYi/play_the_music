@@ -8,6 +8,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
+import { useGame } from "./GameContext";
 
 interface MusicContextType {
   track: Track | null;
@@ -61,6 +62,8 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
 
+  const { level } = useGame();
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !track) return;
@@ -84,14 +87,14 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
         if (!response.ok) throw new Error("Failed to fetch Suno track");
         const blob = await response.blob();
         const file = new File([blob], `${id}.mp3`, { type: "audio/mpeg" });
-        await loadTrack(file).then((loadedTrack) => {
+        await loadTrack(file, level).then((loadedTrack) => {
           setTrack(loadedTrack);
         });
       } catch (err) {
         console.error("Failed to load Suno track", err);
       }
     },
-    [setTrack]
+    [level, setTrack]
   );
 
   const handleMetaDataLoaded = useCallback(() => {

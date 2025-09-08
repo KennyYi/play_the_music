@@ -1,4 +1,5 @@
 // @ts-ignore - TypeScript resolves this import during build
+import { Difficulty } from "@/lib/types";
 import { detectBeats, mapBeatsToLanes, applyOffset } from "./beatMapDetector";
 import type { BeatMap } from "./beatMapSchema";
 
@@ -11,12 +12,14 @@ import type { BeatMap } from "./beatMapSchema";
 export function generateBeatMap(
   samples: Float32Array,
   sampleRate: number,
+  level: Difficulty,
   offset = 0,
   rng: () => number = Math.random
 ): BeatMap {
+  const numberOfLanes = level === Difficulty.Hard ? 6 : 4;
   const start = performance.now();
   const beats = detectBeats(samples, sampleRate);
-  const notes = applyOffset(mapBeatsToLanes(beats, rng), offset);
+  const notes = applyOffset(mapBeatsToLanes(beats, numberOfLanes, rng), offset);
   const elapsed = performance.now() - start;
   console.log(`Beat-map generation completed in ${elapsed.toFixed(0)} ms`);
   if (elapsed > 50) {
@@ -41,23 +44,36 @@ export interface BeatMapVariations {
 export function generateBeatMapVariations(
   samples: Float32Array,
   sampleRate: number,
+  level: Difficulty,
   offset = 0,
   rng: () => number = Math.random
 ): BeatMapVariations {
   const beats = detectBeats(samples, sampleRate);
-  const normal = applyOffset(mapBeatsToLanes(beats, rng), offset);
+
+  const numberOfLanes = level === Difficulty.Hard ? 6 : 4;
+
+  const normal = applyOffset(
+    mapBeatsToLanes(beats, numberOfLanes, rng),
+    offset
+  );
 
   const easyBeats: number[] = beats.filter(
     (_: number, i: number) => i % 2 === 0
   );
-  const easy = applyOffset(mapBeatsToLanes(easyBeats, rng), offset);
+  const easy = applyOffset(
+    mapBeatsToLanes(easyBeats, numberOfLanes, rng),
+    offset
+  );
 
   const hardBeats = [...beats];
   for (let i = 0; i < beats.length - 1; i++) {
     hardBeats.push((beats[i] + beats[i + 1]) / 2);
   }
   hardBeats.sort((a, b) => a - b);
-  const hard = applyOffset(mapBeatsToLanes(hardBeats, rng), offset);
+  const hard = applyOffset(
+    mapBeatsToLanes(hardBeats, numberOfLanes, rng),
+    offset
+  );
 
   return {
     easy: { version: 1, offset, notes: easy },
