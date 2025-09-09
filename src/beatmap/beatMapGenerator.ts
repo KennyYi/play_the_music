@@ -21,12 +21,6 @@ export function generateBeatMap(
   const beats = detectBeats(samples, sampleRate);
   const notes = applyOffset(mapBeatsToLanes(beats, numberOfLanes, rng), offset);
   const elapsed = performance.now() - start;
-  console.log(`Beat-map generation completed in ${elapsed.toFixed(0)} ms`);
-  if (elapsed > 50) {
-    console.warn(
-      `Beat-map generation blocked main thread for ${Math.round(elapsed)} ms`
-    );
-  }
   return { version: 1, offset, notes };
 }
 

@@ -85,7 +85,6 @@ export async function analyzeFile(
         if (event.data.type !== "analysisResult") return;
         worker.removeEventListener("message", handleMessage);
         const elapsed = performance.now() - startTime;
-        console.log(`Analysis completed in ${elapsed.toFixed(0)} ms`);
         if (elapsed > 2500) {
           console.warn(
             `Analysis exceeded 2.5 s target by ${(elapsed - 2500).toFixed(
