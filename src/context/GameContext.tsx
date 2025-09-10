@@ -27,6 +27,8 @@ interface GameContextType {
   setLaneKeys: (keyset: string[]) => void;
   score: number | null;
   setScore: (score: number | null) => void;
+  combo: number;
+  setCombo: (combo: number) => void;
 }
 
 const GameContext = createContext<GameContextType>({
@@ -37,6 +39,8 @@ const GameContext = createContext<GameContextType>({
   setLaneKeys: () => {},
   score: null,
   setScore: () => {},
+  combo: 0,
+  setCombo: () => {},
 });
 
 export function useGame(): GameContextType {
@@ -51,6 +55,7 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
     useState<{ [key in Difficulty]: string[] }>(DEFAULT_KEYSET);
 
   const [score, setScore] = useState<number | null>(null);
+  const [combo, setCombo] = useState(0);
 
   const leadTime = useMemo(() => DEFAULT_LEADTIME[level], [level]);
 
@@ -77,6 +82,8 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
         setLaneKeys: handleSetLaneKeys,
         score,
         setScore,
+        combo,
+        setCombo,
       }}
     >
       {children}

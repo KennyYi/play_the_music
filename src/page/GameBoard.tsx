@@ -2,7 +2,7 @@ import { useGame } from "@/context/GameContext";
 import { useMusic } from "@/context/MusicContext";
 import { NoteSpawner } from "@/utils/noteSpawner";
 import React, { useEffect, useRef } from "react";
-import { Application, Graphics, Sprite } from "pixi.js";
+import { Application, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 
 interface GameBoardProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -18,7 +18,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   isPlaying,
 }) => {
   const { track } = useMusic();
-  const { level, laneKeys, leadTime, score, setScore } = useGame();
+  const { level, laneKeys, leadTime, score, setScore, combo, setCombo } =
+    useGame();
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const spawnerRef = useRef<NoteSpawner | null>(null);
   const spawnYRef = useRef(-20);
@@ -39,6 +40,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const laneRefs = useRef<Graphics[]>([]);
   const laneFlashTimersRef = useRef<number[]>([]);
+  const judgementTextRef = useRef<{ text: Text; life: number } | null>(null);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
@@ -127,7 +129,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           lanes[i].alpha = 0.5;
           timers[i]--;
         } else {
-          lanes[i].alpha = i % 2 === 0 ? 0.2 : 0.3;
+          lanes[i].alpha = 1;
         }
       }
 
@@ -144,6 +146,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }
 
       const height = app.canvas.height;
+
+      if (judgementTextRef.current) {
+        const judgement = judgementTextRef.current;
+        judgement.life--;
+        judgement.text.alpha = Math.max(0, judgement.life / 20); // Fade out
+        if (judgement.life <= 0) {
+          app.stage.removeChild(judgement.text);
+          judgementTextRef.current = null;
+        }
+      }
 
       const particles = particlesRef.current;
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -184,6 +196,33 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   }, [appRef, audioRef, latency, leadTime, isPlaying]);
 
   useEffect(() => {
+    const app = appRef.current;
+
+    const showJudgement = (message: string) => {
+      if (!app) return;
+
+      if (judgementTextRef.current) {
+        app.stage.removeChild(judgementTextRef.current.text);
+      }
+
+      const style = new TextStyle({
+        fontFamily: "Arial",
+        fontSize: 48,
+        fontWeight: "bold",
+        fill: message === "MISS" ? "#ff0000" : "#00ff00",
+        stroke: { color: "#ffffff", width: 4 },
+        align: "center",
+      });
+
+      const newText = new Text({ text: message, style });
+      newText.x = app.screen.width / 2;
+      newText.y = 150;
+      newText.anchor.set(0.5);
+      app.stage.addChild(newText);
+
+      judgementTextRef.current = { text: newText, life: 30 }; // life in frames
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const audio = audioRef.current;
       if (!isPlaying || !audio) return;
@@ -214,9 +253,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       if (hitNoteIndex !== -1) {
         const hitNote = activeNotes[hitNoteIndex];
         setScore((score ?? 0) + 100);
+        setCombo(combo + 1);
         hitNote.sprite.visible = false;
 
-        const app = appRef.current;
+        showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
+
         if (app) {
           const particles = particlesRef.current;
           for (let i = 0; i < 20; i++) {
@@ -236,6 +277,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
         activeNotes.splice(hitNoteIndex, 1);
       } else {
+        showJudgement("MISS");
+        setCombo(0);
         console.log(`MISS! Lane: ${laneIndex}`);
       }
     };
@@ -245,7 +288,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isPlaying, score]);
+  }, [isPlaying, score, combo, appRef, audioRef, latency, laneKeys, setScore]);
 
   return <div className="w-full h-200 border border-black" ref={canvasRef} />;
 };
