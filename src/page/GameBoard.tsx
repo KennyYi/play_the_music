@@ -41,6 +41,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const laneRefs = useRef<Graphics[]>([]);
   const laneFlashTimersRef = useRef<number[]>([]);
   const judgementTextRef = useRef<{ text: Text; life: number } | null>(null);
+  const scoreTextRef = useRef<Text | null>(null);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
@@ -82,12 +83,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     base.rect(0, 0, laneWidth, 20).fill(0xffffff);
     const texture = app.renderer.generateTexture(base);
     base.destroy();
-
-    const hitline = new Graphics();
-    hitline
-      .rect(0, app.canvas.height - 10, app.canvas.width, 10)
-      .fill(0x000000);
-    app.stage.addChild(hitline);
 
     const allNotes = allNotesRef.current;
     for (const note of beatMap.notes) {
@@ -223,6 +218,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       judgementTextRef.current = { text: newText, life: 30 }; // life in frames
     };
 
+    const updateScoreText = () => {
+      if (!app) return;
+      if (scoreTextRef.current) {
+        app.stage.removeChild(scoreTextRef.current);
+      }
+
+      const style = new TextStyle({
+        fontFamily: "Arial",
+        fontSize: 24,
+        fill: "#ffffff",
+        align: "left",
+      });
+
+      const newScoreText = new Text({ text: `Score: ${score}`, style });
+      newScoreText.x = 20;
+      newScoreText.y = 20;
+      newScoreText.anchor.set(0, 0);
+      app.stage.addChild(newScoreText);
+
+      scoreTextRef.current = newScoreText;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const audio = audioRef.current;
       if (!isPlaying || !audio) return;
@@ -257,6 +274,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         hitNote.sprite.visible = false;
 
         showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
+        updateScoreText();
 
         if (app) {
           const particles = particlesRef.current;
