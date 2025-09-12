@@ -17,10 +17,10 @@ export function generateBeatMap(
   rng: () => number = Math.random
 ): BeatMap {
   const numberOfLanes = level === Difficulty.Hard ? 6 : 4;
-  const start = performance.now();
+  // const start = performance.now();
   const beats = detectBeats(samples, sampleRate);
   const notes = applyOffset(mapBeatsToLanes(beats, numberOfLanes, rng), offset);
-  const elapsed = performance.now() - start;
+  // const elapsed = performance.now() - start;
   return { version: 1, offset, notes };
 }
 
