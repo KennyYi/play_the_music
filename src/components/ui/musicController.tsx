@@ -36,7 +36,7 @@ const MusicController = React.memo<MusicControllerProps>(
     skipBack,
   }) => {
     return (
-      <div className="flex items-center space-between gap-2">
+      <div className="flex items-center justify-between gap-1 lg:gap-2">
         <ControlButton
           onClick={pickRandomMusic}
           icon={<Music4Icon />}

@@ -308,5 +308,5 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     };
   }, [isPlaying, score, combo, appRef, audioRef, latency, laneKeys, setScore]);
 
-  return <div className="w-full h-200 border border-black" ref={canvasRef} />;
+  return <div className="w-full border border-black h-max" ref={canvasRef} />;
 };

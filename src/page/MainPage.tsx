@@ -93,9 +93,9 @@ const MainPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="items-center flex flex-col gap-10">
-      <div className="flex flex-row w-full items-center gap-4">
-        <img src={logo} className="h-16" />
+    <div className="items-center flex flex-col gap-2">
+      <div className="flex flex-row w-full items-center gap-1 lg:gap-4">
+        <img src={logo} className="h-16 md:hidden" />
         <div className="flex-1 items-center justify-center flex">
           <MusicController
             isPlaying={isPlaying ?? false}
