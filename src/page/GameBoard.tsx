@@ -1,8 +1,13 @@
 import { useGame } from "@/context/GameContext";
 import { useMusic } from "@/context/MusicContext";
 import { NoteSpawner } from "@/utils/noteSpawner";
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Application, Graphics, Sprite, Text, TextStyle } from "pixi.js";
+
+const HIT_WINDOW = 0.1;
+const LANE_FLASH_DURATION = 10;
+const JUDGEMENT_LIFE = 30;
+const PARTICLE_COUNT = 20;
 
 interface GameBoardProps {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -58,6 +63,125 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [canvasRef, appRef]);
 
+  const showJudgement = useCallback(
+    (message: string) => {
+      const app = appRef.current;
+      if (!app) return;
+
+      if (judgementTextRef.current) {
+        app.stage.removeChild(judgementTextRef.current.text);
+      }
+
+      const style = new TextStyle({
+        fontFamily: "Arial",
+        fontSize: 48,
+        fontWeight: "bold",
+        fill: message === "MISS" ? "#ff0000" : "#00ff00",
+        stroke: { color: "#ffffff", width: 4 },
+        align: "center",
+      });
+
+      const newText = new Text({ text: message, style });
+      newText.x = app.screen.width / 2;
+      newText.y = 150;
+      newText.anchor.set(0.5);
+      app.stage.addChild(newText);
+
+      judgementTextRef.current = { text: newText, life: JUDGEMENT_LIFE }; // life in frames
+    },
+    [appRef, judgementTextRef]
+  );
+
+  const updateScoreText = useCallback(() => {
+    const app = appRef.current;
+    if (!app) return;
+    if (scoreTextRef.current) {
+      app.stage.removeChild(scoreTextRef.current);
+    }
+
+    const style = new TextStyle({
+      fontFamily: "Arial",
+      fontSize: 24,
+      fill: "#ffffff",
+      align: "left",
+    });
+
+    const newScoreText = new Text({ text: `Score: ${score}`, style });
+    newScoreText.x = 20;
+    newScoreText.y = 20;
+    newScoreText.anchor.set(0, 0);
+    app.stage.addChild(newScoreText);
+
+    scoreTextRef.current = newScoreText;
+  }, [appRef, scoreTextRef]);
+
+  const handleHitAttempt = useCallback(
+    (laneIndex: number) => {
+      const audio = audioRef.current;
+      const app = appRef.current;
+      if (!isPlaying || !audio || !app) return;
+
+      laneFlashTimersRef.current[laneIndex] = LANE_FLASH_DURATION;
+
+      const hitTime = audio.currentTime + latency;
+      const hitWindow = HIT_WINDOW;
+      const activeNotes = activeNotesRef.current;
+      let hitNoteIndex = -1;
+      let closestTimeDiff = Infinity;
+
+      for (let i = 0; i < activeNotes.length; i++) {
+        const note = activeNotes[i];
+        if (note.lane === laneIndex) {
+          const timeDiff = Math.abs(note.time - hitTime);
+          if (timeDiff < hitWindow && timeDiff < closestTimeDiff) {
+            closestTimeDiff = timeDiff;
+            hitNoteIndex = i;
+          }
+        }
+      }
+
+      if (hitNoteIndex !== -1) {
+        const hitNote = activeNotes[hitNoteIndex];
+        setScore((score ?? 0) + 100);
+        setCombo(combo + 1);
+        hitNote.sprite.visible = false;
+
+        showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
+        updateScoreText();
+
+        if (app) {
+          const particles = particlesRef.current;
+          for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const p = new Graphics();
+            p.circle(0, 0, 2).fill(0xffffff);
+            p.x = hitNote.sprite.x + hitNote.sprite.width / 2;
+            p.y = hitNote.sprite.y + hitNote.sprite.height / 2;
+            app.stage.addChild(p);
+            particles.push({
+              gfx: p,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              life: 1,
+            });
+          }
+        }
+        activeNotes.splice(hitNoteIndex, 1);
+      } else {
+        showJudgement("MISS");
+        setCombo(0);
+      }
+    },
+    [
+      audioRef,
+      isPlaying,
+      laneKeys,
+      setScore,
+      setCombo,
+      showJudgement,
+      updateScoreText,
+    ]
+  );
+
   useEffect(() => {
     const app = appRef.current;
     if (!app || !track?.beatMaps) return;
@@ -75,6 +199,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     for (let i = 0; i < laneKeys.length; i++) {
       const lane = new Graphics();
       lane.rect(i * laneWidth, 0, laneWidth, app.canvas.height).fill(0x000000);
+
+      lane.interactive = true;
+      lane.cursor = "pointer";
+      lane.on("pointerdown", () => handleHitAttempt(i));
+
       app.stage.addChild(lane);
       laneRefs.current.push(lane);
     }
@@ -105,7 +234,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       spawnerRef.current = null;
       spawnIndexRef.current = 0;
     };
-  }, [appRef, track, level, laneKeys, leadTime]);
+  }, [appRef, track, level, laneKeys, leadTime, handleHitAttempt]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -191,114 +320,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   }, [appRef, audioRef, latency, leadTime, isPlaying]);
 
   useEffect(() => {
-    const app = appRef.current;
-
-    const showJudgement = (message: string) => {
-      if (!app) return;
-
-      if (judgementTextRef.current) {
-        app.stage.removeChild(judgementTextRef.current.text);
-      }
-
-      const style = new TextStyle({
-        fontFamily: "Arial",
-        fontSize: 48,
-        fontWeight: "bold",
-        fill: message === "MISS" ? "#ff0000" : "#00ff00",
-        stroke: { color: "#ffffff", width: 4 },
-        align: "center",
-      });
-
-      const newText = new Text({ text: message, style });
-      newText.x = app.screen.width / 2;
-      newText.y = 150;
-      newText.anchor.set(0.5);
-      app.stage.addChild(newText);
-
-      judgementTextRef.current = { text: newText, life: 30 }; // life in frames
-    };
-
-    const updateScoreText = () => {
-      if (!app) return;
-      if (scoreTextRef.current) {
-        app.stage.removeChild(scoreTextRef.current);
-      }
-
-      const style = new TextStyle({
-        fontFamily: "Arial",
-        fontSize: 24,
-        fill: "#ffffff",
-        align: "left",
-      });
-
-      const newScoreText = new Text({ text: `Score: ${score}`, style });
-      newScoreText.x = 20;
-      newScoreText.y = 20;
-      newScoreText.anchor.set(0, 0);
-      app.stage.addChild(newScoreText);
-
-      scoreTextRef.current = newScoreText;
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      const audio = audioRef.current;
-      if (!isPlaying || !audio) return;
-
       const laneIndex = laneKeys.indexOf(e.key.toUpperCase());
       if (laneIndex === -1) return;
 
-      laneFlashTimersRef.current[laneIndex] = 10;
-
-      const hitTime = audio.currentTime + latency;
-      const hitWindow = 0.1;
-
-      const activeNotes = activeNotesRef.current;
-      let hitNoteIndex = -1;
-      let closestTimeDiff = Infinity;
-
-      for (let i = 0; i < activeNotes.length; i++) {
-        const note = activeNotes[i];
-        if (note.lane === laneIndex) {
-          const timeDiff = Math.abs(note.time - hitTime);
-          if (timeDiff < hitWindow && timeDiff < closestTimeDiff) {
-            closestTimeDiff = timeDiff;
-            hitNoteIndex = i;
-          }
-        }
-      }
-
-      if (hitNoteIndex !== -1) {
-        const hitNote = activeNotes[hitNoteIndex];
-        setScore((score ?? 0) + 100);
-        setCombo(combo + 1);
-        hitNote.sprite.visible = false;
-
-        showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
-        updateScoreText();
-
-        if (app) {
-          const particles = particlesRef.current;
-          for (let i = 0; i < 20; i++) {
-            const p = new Graphics();
-            p.circle(0, 0, 2).fill(0xffffff);
-            p.x = hitNote.sprite.x + hitNote.sprite.width / 2;
-            p.y = hitNote.sprite.y + hitNote.sprite.height / 2;
-            app.stage.addChild(p);
-            particles.push({
-              gfx: p,
-              vx: (Math.random() - 0.5) * 4,
-              vy: (Math.random() - 0.5) * 4,
-              life: 1,
-            });
-          }
-        }
-
-        activeNotes.splice(hitNoteIndex, 1);
-      } else {
-        showJudgement("MISS");
-        setCombo(0);
-        console.log(`MISS! Lane: ${laneIndex}`);
-      }
+      handleHitAttempt(laneIndex);
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -306,7 +332,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isPlaying, score, combo, appRef, audioRef, latency, laneKeys, setScore]);
+  }, [laneKeys, handleHitAttempt]);
 
   return <div className="w-full border border-black h-max" ref={canvasRef} />;
 };
