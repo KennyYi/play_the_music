@@ -26,7 +26,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { useGame } from "@/context/GameContext";
-import { Difficulty } from "@/lib/types";
+import { Difficulty, GameStatus } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 
 const MainPage: React.FC = () => {
@@ -41,7 +41,7 @@ const MainPage: React.FC = () => {
     track,
     audioRef,
   } = useMusic();
-  const { level, setLevel, laneKeys, setLaneKeys } = useGame();
+  const { level, setLevel, laneKeys, setLaneKeys, setStatus } = useGame();
   const [genres, setGenres] = useState<GenreEntry[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
@@ -68,9 +68,10 @@ const MainPage: React.FC = () => {
         setIsFetching(true);
         await fetchMusic(music.id).then(() => play());
         setIsFetching(false);
+        setStatus(GameStatus.Ready);
       }
     }
-  }, [genres, isPlaying, stop, play, setIsFetching]);
+  }, [genres, isPlaying, stop, play, setIsFetching, setStatus]);
 
   useEffect(() => {
     const initializeApp = async () => {

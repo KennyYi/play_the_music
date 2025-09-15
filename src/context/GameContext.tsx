@@ -1,4 +1,4 @@
-import { Difficulty } from "@/lib/types";
+import { Difficulty, GameStatus } from "@/lib/types";
 import React, {
   createContext,
   useContext,
@@ -25,10 +25,8 @@ interface GameContextType {
   setLevel: (level: Difficulty) => void;
   laneKeys: string[];
   setLaneKeys: (keyset: string[]) => void;
-  score: number | null;
-  setScore: (score: number | null) => void;
-  combo: number;
-  setCombo: (combo: number) => void;
+  status: GameStatus;
+  setStatus: (status: GameStatus) => void;
 }
 
 const GameContext = createContext<GameContextType>({
@@ -37,10 +35,8 @@ const GameContext = createContext<GameContextType>({
   setLevel: () => {},
   laneKeys: DEFAULT_KEYSET[Difficulty.Easy],
   setLaneKeys: () => {},
-  score: null,
-  setScore: () => {},
-  combo: 0,
-  setCombo: () => {},
+  status: GameStatus.Stop,
+  setStatus: () => {},
 });
 
 export function useGame(): GameContextType {
@@ -53,9 +49,7 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const [level, setLevel] = useState<Difficulty>(Difficulty.Easy);
   const [laneKeyMap, setLaneKeyMap] =
     useState<{ [key in Difficulty]: string[] }>(DEFAULT_KEYSET);
-
-  const [score, setScore] = useState<number | null>(null);
-  const [combo, setCombo] = useState(0);
+  const [status, setStatus] = useState<GameStatus>(GameStatus.Stop);
 
   const leadTime = useMemo(() => DEFAULT_LEADTIME[level], [level]);
 
@@ -80,10 +74,8 @@ export const GameContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
         setLevel,
         laneKeys,
         setLaneKeys: handleSetLaneKeys,
-        score,
-        setScore,
-        combo,
-        setCombo,
+        status,
+        setStatus,
       }}
     >
       {children}

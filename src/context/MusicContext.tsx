@@ -1,5 +1,5 @@
 import { loadTrack } from "@/lib/TrackLoader";
-import { Track } from "@/lib/types";
+import { GameStatus, Track } from "@/lib/types";
 import React, {
   createContext,
   useCallback,
@@ -62,7 +62,7 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
 
-  const { level } = useGame();
+  const { level, setStatus } = useGame();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -90,6 +90,7 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
         await loadTrack(file, level).then((loadedTrack) => {
           setTrack(loadedTrack);
         });
+        setStatus(GameStatus.Ready);
       } catch (err) {
         console.error("Failed to load Suno track", err);
       }
@@ -128,6 +129,7 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
           play: () => {
             audioCtxRef.current?.resume();
             audioRef.current?.play();
+            setStatus(GameStatus.Playing);
           },
           pause: () => audioRef.current?.pause(),
           stop: () => {
@@ -135,6 +137,7 @@ export const MusicContextProvider: React.FC<React.PropsWithChildren<{}>> = ({
             if (audio) {
               audio.pause();
               audio.currentTime = 0;
+              setStatus(GameStatus.Stop);
             }
           },
           skipBack: () => {

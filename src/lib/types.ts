@@ -15,3 +15,10 @@ export interface Track {
   analysisResult?: AnalysisResult;
   beatMaps?: BeatMapVariations;
 }
+
+export enum GameStatus {
+  Stop = "stop",
+  Playing = "playing",
+  Pause = "pause",
+  Ready = "ready",
+}

@@ -1,8 +1,9 @@
 import { useGame } from "@/context/GameContext";
 import { useMusic } from "@/context/MusicContext";
 import { NoteSpawner } from "@/utils/noteSpawner";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Application, Graphics, Sprite, Text, TextStyle } from "pixi.js";
+import { GameStatus } from "@/lib/types";
 
 const HIT_WINDOW = 0.1;
 const LANE_FLASH_DURATION = 10;
@@ -23,8 +24,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   isPlaying,
 }) => {
   const { track } = useMusic();
-  const { level, laneKeys, leadTime, score, setScore, combo, setCombo } =
-    useGame();
+  const { level, laneKeys, leadTime, status } = useGame();
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const spawnerRef = useRef<NoteSpawner | null>(null);
   const spawnYRef = useRef(-20);
@@ -47,6 +47,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const laneFlashTimersRef = useRef<number[]>([]);
   const judgementTextRef = useRef<{ text: Text; life: number } | null>(null);
   const scoreTextRef = useRef<Text | null>(null);
+
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
@@ -92,28 +95,31 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     [appRef, judgementTextRef]
   );
 
-  const updateScoreText = useCallback(() => {
-    const app = appRef.current;
-    if (!app) return;
-    if (scoreTextRef.current) {
-      app.stage.removeChild(scoreTextRef.current);
-    }
+  const updateScoreText = useCallback(
+    (newScore: number) => {
+      const app = appRef.current;
+      if (!app) return;
+      if (scoreTextRef.current) {
+        app.stage.removeChild(scoreTextRef.current);
+      }
 
-    const style = new TextStyle({
-      fontFamily: "Arial",
-      fontSize: 24,
-      fill: "#ffffff",
-      align: "left",
-    });
+      const style = new TextStyle({
+        fontFamily: "Arial",
+        fontSize: 24,
+        fill: "#ffffff",
+        align: "left",
+      });
 
-    const newScoreText = new Text({ text: `Score: ${score}`, style });
-    newScoreText.x = 20;
-    newScoreText.y = 20;
-    newScoreText.anchor.set(0, 0);
-    app.stage.addChild(newScoreText);
+      const newScoreText = new Text({ text: `Score: ${newScore}`, style });
+      newScoreText.x = 20;
+      newScoreText.y = 20;
+      newScoreText.anchor.set(0, 0);
+      app.stage.addChild(newScoreText);
 
-    scoreTextRef.current = newScoreText;
-  }, [appRef, scoreTextRef]);
+      scoreTextRef.current = newScoreText;
+    },
+    [appRef, scoreTextRef]
+  );
 
   const handleHitAttempt = useCallback(
     (laneIndex: number) => {
@@ -142,12 +148,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       if (hitNoteIndex !== -1) {
         const hitNote = activeNotes[hitNoteIndex];
-        setScore((score ?? 0) + 100);
-        setCombo(combo + 1);
-        hitNote.sprite.visible = false;
 
-        showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
-        updateScoreText();
+        setScore((prev) => {
+          const updatedScore = (prev ?? 0) + 100;
+          updateScoreText(updatedScore);
+          return updatedScore;
+        });
+        setCombo((combo) => {
+          const updated = combo + 1;
+          showJudgement(combo > 2 ? `${combo + 1} COMBO!!` : "HIT!");
+          return updated;
+        });
+        hitNote.sprite.visible = false;
 
         if (app) {
           const particles = particlesRef.current;
@@ -171,18 +183,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         setCombo(0);
       }
     },
-    [
-      audioRef,
-      isPlaying,
-      laneKeys,
-      setScore,
-      setCombo,
-      showJudgement,
-      updateScoreText,
-    ]
+    [audioRef, isPlaying, laneKeys, setCombo, showJudgement, updateScoreText]
   );
 
-  useEffect(() => {
+  const setupGame = useCallback(() => {
     const app = appRef.current;
     if (!app || !track?.beatMaps) return;
 
@@ -193,7 +197,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     laneRefs.current = [];
     laneFlashTimersRef.current = new Array(laneKeys.length).fill(0);
 
-    const beatMap = track.beatMaps[level];
     const laneWidth = app.canvas.width / laneKeys.length;
 
     for (let i = 0; i < laneKeys.length; i++) {
@@ -214,6 +217,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     base.destroy();
 
     const allNotes = allNotesRef.current;
+    const beatMap = track.beatMaps[level];
+
     for (const note of beatMap.notes) {
       const sprite = new Sprite(texture);
       sprite.x = note.lane * laneWidth + 5;
@@ -224,17 +229,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
 
     spawnerRef.current = new NoteSpawner(beatMap);
+  }, [appRef, track, level, laneKeys, handleHitAttempt]);
+
+  useEffect(() => {
+    if (track) {
+      setupGame();
+    }
 
     return () => {
-      if (app.stage) {
-        app.stage.removeChildren();
+      if (status === GameStatus.Stop) {
+        const app = appRef.current;
+        if (app?.stage) {
+          app.stage.removeChildren();
+        }
+        allNotesRef.current = [];
+        activeNotesRef.current = [];
+        spawnerRef.current = null;
+        spawnIndexRef.current = 0;
+        setScore(0);
+        setCombo(0);
       }
-      allNotesRef.current = [];
-      activeNotesRef.current = [];
-      spawnerRef.current = null;
-      spawnIndexRef.current = 0;
     };
-  }, [appRef, track, level, laneKeys, leadTime, handleHitAttempt]);
+  }, [track, setupGame, appRef, status]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -312,8 +328,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
 
     return () => {
-      app.ticker.remove(Tick);
-      particlesRef.current.forEach((p) => app.stage.removeChild(p.gfx));
+      if (app.ticker) {
+        app.ticker.remove(Tick);
+      }
+
+      if (app && app.stage) {
+        particlesRef.current.forEach((p) => {
+          if (p.gfx.parent) {
+            app.stage.removeChild(p.gfx);
+          }
+        });
+      }
+
       particlesRef.current.length = 0;
       setScore(0);
     };
