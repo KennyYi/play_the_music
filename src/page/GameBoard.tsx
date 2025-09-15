@@ -48,8 +48,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const judgementTextRef = useRef<{ text: Text; life: number } | null>(null);
   const scoreTextRef = useRef<Text | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
+  const [_score, setScore] = useState(0);
+  const [_combo, setCombo] = useState(0);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
