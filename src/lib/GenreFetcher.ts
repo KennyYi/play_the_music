@@ -1,3 +1,5 @@
+import { getGenreJsPath } from "./utils";
+
 export interface TrackInfo {
   id: string;
   name: string;
@@ -90,9 +92,7 @@ export class GenreScriptFetcher {
   constructor() {}
 
   async fetch(): Promise<GenreEntry[]> {
-    const res = await fetch(
-      "https://groove.suno.com/_next/static/chunks/app/page-5343a953b3364d6e.js"
-    );
+    const res = await fetch(getGenreJsPath("page-3eca88bd5e372aea"));
     const text = await res.text();
     const json = extractJsonFromScript(text);
     const raw = JSON.parse(json) as Record<

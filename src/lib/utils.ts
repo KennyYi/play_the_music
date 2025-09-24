@@ -16,3 +16,7 @@ export function formatDuration(seconds: number): string {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
+
+export function getGenreJsPath(jsFileName: string): string {
+  return `https://groove.suno.com/_next/static/chunks/app/${jsFileName}.js`;
+}
