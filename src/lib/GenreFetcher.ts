@@ -1,4 +1,4 @@
-import { getGenreJsPath } from "./utils";
+import { getGenreJsPath, detectGenreJsHash } from "./utils";
 
 export interface TrackInfo {
   id: string;
@@ -92,7 +92,15 @@ export class GenreScriptFetcher {
   constructor() {}
 
   async fetch(): Promise<GenreEntry[]> {
-    const res = await fetch(getGenreJsPath("page-3eca88bd5e372aea"));
+    // Automatically detect the current JS file hash
+    const hash = await detectGenreJsHash();
+    console.log(`Detected genre JS hash: ${hash}`);
+    
+    const res = await fetch(getGenreJsPath(hash));
+    if (!res.ok) {
+      throw new Error(`Failed to fetch genre JS: ${res.status}`);
+    }
+    
     const text = await res.text();
     const json = extractJsonFromScript(text);
     const raw = JSON.parse(json) as Record<
