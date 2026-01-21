@@ -114,11 +114,75 @@ export class GenreScriptFetcher {
     console.log("Is array:", Array.isArray(raw));
     console.log("Raw data:", raw);
     
-    // Check if raw is an object with genre keys
+    // Check if raw is valid
     if (!raw || typeof raw !== 'object') {
-      throw new Error(`Unexpected data structure. Expected object, got: ${typeof raw}`);
+      throw new Error(`Unexpected data structure. Expected object or array, got: ${typeof raw}`);
     }
 
+    // Handle array format (new Suno API structure)
+    if (Array.isArray(raw)) {
+      console.log("Detected array format - using new parsing logic");
+      console.log("Array length:", raw.length);
+      console.log("First item sample:", raw[0]);
+      console.log("Second item sample:", raw[1]);
+      
+      // Group tracks by genre/metadata field
+      const genreMap: Record<string, { id: string; title?: string; name?: string; genre?: string; metadata?: string; tags?: string }[]> = {};
+      
+      for (const track of raw) {
+        // Ensure track is an object
+        if (!track || typeof track !== 'object') {
+          console.warn("Skipping invalid track:", track);
+          continue;
+        }
+        
+        // Try to extract genre from various possible fields
+        let genre = "All Tracks"; // Default genre if none found
+        
+        if (track.genre && typeof track.genre === 'string') {
+          genre = track.genre;
+        } else if (track.metadata && typeof track.metadata === 'string') {
+          genre = track.metadata;
+        } else if (track.tags) {
+          // Handle tags as array or string
+          if (Array.isArray(track.tags) && track.tags.length > 0) {
+            genre = track.tags[0];
+          } else if (typeof track.tags === 'string') {
+            genre = track.tags;
+          }
+        }
+        
+        if (!genreMap[genre]) {
+          genreMap[genre] = [];
+        }
+        genreMap[genre].push(track);
+      }
+      
+      console.log("Genre map keys:", Object.keys(genreMap));
+      console.log("Tracks per genre:", Object.entries(genreMap).map(([g, t]) => `${g}: ${t.length}`));
+      
+      return Object.entries(genreMap).map(([genre, tracks]) => {
+        // Group by title (without optional version suffix like " v1")
+        const grouped: Record<
+          string,
+          { id: string; title?: string; name?: string }[]
+        > = {};
+        for (const t of tracks) {
+          const title = (t.title || t.name || "Untitled").replace(/ v[12]$/i, "");
+          if (!grouped[title]) grouped[title] = [];
+          grouped[title].push(t);
+        }
+        // Pick a random variant for each title
+        const songs: TrackInfo[] = Object.values(grouped).map((variants) => {
+          const choice = variants[Math.floor(Math.random() * variants.length)];
+          return { id: choice.id, name: choice.title || choice.name || "Untitled" };
+        });
+        return { genre, songs };
+      });
+    }
+
+    // Handle object format (old Suno API structure)
+    console.log("Detected object format - using legacy parsing logic");
     return Object.entries(raw as Record<string, { id: string; title?: string; name?: string }[]>).map(([genre, tracks]) => {
       // Group by title (without optional version suffix like " v1")
       const grouped: Record<
