@@ -103,12 +103,23 @@ export class GenreScriptFetcher {
     
     const text = await res.text();
     const json = extractJsonFromScript(text);
-    const raw = JSON.parse(json) as Record<
-      string,
-      { id: string; title?: string; name?: string }[]
-    >;
+    
+    // Debug: Log the raw JSON string to see its structure
+    console.log("Extracted JSON (first 500 chars):", json.substring(0, 500));
+    
+    const raw = JSON.parse(json);
+    
+    // Debug: Log the type and structure of raw
+    console.log("Parsed data type:", typeof raw);
+    console.log("Is array:", Array.isArray(raw));
+    console.log("Raw data:", raw);
+    
+    // Check if raw is an object with genre keys
+    if (!raw || typeof raw !== 'object') {
+      throw new Error(`Unexpected data structure. Expected object, got: ${typeof raw}`);
+    }
 
-    return Object.entries(raw).map(([genre, tracks]) => {
+    return Object.entries(raw as Record<string, { id: string; title?: string; name?: string }[]>).map(([genre, tracks]) => {
       // Group by title (without optional version suffix like " v1")
       const grouped: Record<
         string,
