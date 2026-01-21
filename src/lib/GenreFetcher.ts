@@ -11,9 +11,19 @@ export interface GenreEntry {
 }
 
 export function extractJsonFromScript(js: string): string {
-  const parseIdx = js.indexOf("JSON.parse");
+  // Find the SECOND JSON.parse call, which contains the actual track data
+  // First JSON.parse contains UI layout data (angle, radius, etc.)
+  // Second JSON.parse contains music data (id, title, etc.)
+  
+  let parseIdx = js.indexOf("JSON.parse");
   if (parseIdx === -1) {
     throw new Error("JSON.parse call not found");
+  }
+  
+  // Find the SECOND occurrence
+  parseIdx = js.indexOf("JSON.parse", parseIdx + 1);
+  if (parseIdx === -1) {
+    throw new Error("Second JSON.parse call not found");
   }
 
   const parenIdx = js.indexOf("(", parseIdx);
@@ -128,14 +138,30 @@ export class GenreScriptFetcher {
       console.log("Second item sample:", raw[1]);
       
       // Group tracks by genre/metadata field
-      const genreMap: Record<string, { id: string; title?: string; name?: string; genre?: string; metadata?: string; tags?: string }[]> = {};
+      const genreMap: Record<string, any[]> = {};
       
+      let trackCount = 0;
       for (const track of raw) {
         // Ensure track is an object
         if (!track || typeof track !== 'object') {
           console.warn("Skipping invalid track:", track);
           continue;
         }
+        
+        // Log first few tracks in detail
+        if (trackCount < 3) {
+          console.log(`\n=== Track ${trackCount} Sample ===`);
+          console.log("All keys:", Object.keys(track));
+          console.log("Full track object:", track);
+          
+          // Check specifically for ID-like fields
+          const idFields = ['id', 'clip_id', 'audio_id', 'track_id', 'song_id', 'uid'];
+          console.log("ID field check:");
+          idFields.forEach(field => {
+            console.log(`  ${field}:`, (track as any)[field]);
+          });
+        }
+        trackCount++;
         
         // Try to extract genre from various possible fields
         let genre = "All Tracks"; // Default genre if none found
@@ -155,9 +181,12 @@ export class GenreScriptFetcher {
         
         if (!genreMap[genre]) {
           genreMap[genre] = [];
+          console.log(`Created new genre group: "${genre}"`);
         }
         genreMap[genre].push(track);
       }
+      
+      console.log(`\nTotal tracks processed: ${trackCount}`);
       
       console.log("Genre map keys:", Object.keys(genreMap));
       console.log("Tracks per genre:", Object.entries(genreMap).map(([g, t]) => `${g}: ${t.length}`));
