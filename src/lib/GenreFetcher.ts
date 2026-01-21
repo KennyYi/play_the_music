@@ -124,6 +124,7 @@ export class GenreScriptFetcher {
       console.log("Detected array format - using new parsing logic");
       console.log("Array length:", raw.length);
       console.log("First item sample:", raw[0]);
+      console.log("First item keys:", raw[0] ? Object.keys(raw[0]) : "N/A");
       console.log("Second item sample:", raw[1]);
       
       // Group tracks by genre/metadata field
@@ -173,10 +174,31 @@ export class GenreScriptFetcher {
           grouped[title].push(t);
         }
         // Pick a random variant for each title
-        const songs: TrackInfo[] = Object.values(grouped).map((variants) => {
-          const choice = variants[Math.floor(Math.random() * variants.length)];
-          return { id: choice.id, name: choice.title || choice.name || "Untitled" };
-        });
+        const songs: TrackInfo[] = Object.values(grouped)
+          .map((variants) => {
+            const choice = variants[Math.floor(Math.random() * variants.length)];
+            
+            // Try to extract ID from various possible fields
+            const trackId = choice.id || 
+                           (choice as any).clip_id || 
+                           (choice as any).audio_id || 
+                           (choice as any).track_id || 
+                           (choice as any).song_id ||
+                           (choice as any).uid ||
+                           "";
+            
+            const trackName = choice.title || choice.name || "Untitled";
+            
+            // Skip tracks without a valid ID
+            if (!trackId) {
+              console.warn(`Skipping track without ID: ${trackName}`);
+              return null;
+            }
+            
+            return { id: trackId, name: trackName };
+          })
+          .filter((song): song is TrackInfo => song !== null); // Remove null entries
+        
         return { genre, songs };
       });
     }
@@ -195,10 +217,30 @@ export class GenreScriptFetcher {
         grouped[title].push(t);
       }
       // Pick a random variant for each title
-      const songs: TrackInfo[] = Object.values(grouped).map((variants) => {
-        const choice = variants[Math.floor(Math.random() * variants.length)];
-        return { id: choice.id, name: choice.title || choice.name || "" };
-      });
+      const songs: TrackInfo[] = Object.values(grouped)
+        .map((variants) => {
+          const choice = variants[Math.floor(Math.random() * variants.length)];
+          
+          // Try to extract ID from various possible fields
+          const trackId = choice.id || 
+                         (choice as any).clip_id || 
+                         (choice as any).audio_id || 
+                         (choice as any).track_id || 
+                         (choice as any).song_id ||
+                         (choice as any).uid ||
+                         "";
+          
+          const trackName = choice.title || choice.name || "Untitled";
+          
+          // Skip tracks without a valid ID
+          if (!trackId) {
+            console.warn(`Skipping track without ID: ${trackName}`);
+            return null;
+          }
+          
+          return { id: trackId, name: trackName };
+        })
+        .filter((song): song is TrackInfo => song !== null); // Remove null entries
       return { genre, songs };
     });
   }
