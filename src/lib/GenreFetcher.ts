@@ -104,7 +104,7 @@ export class GenreScriptFetcher {
   async fetch(): Promise<GenreEntry[]> {
     // Automatically detect the current JS file hash
     const hash = await detectGenreJsHash();
-    console.log(`Detected genre JS hash: ${hash}`);
+
     
     const res = await fetch(getGenreJsPath(hash));
     if (!res.ok) {
@@ -114,15 +114,7 @@ export class GenreScriptFetcher {
     const text = await res.text();
     const json = extractJsonFromScript(text);
     
-    // Debug: Log the raw JSON string to see its structure
-    console.log("Extracted JSON (first 500 chars):", json.substring(0, 500));
-    
     const raw = JSON.parse(json);
-    
-    // Debug: Log the type and structure of raw
-    console.log("Parsed data type:", typeof raw);
-    console.log("Is array:", Array.isArray(raw));
-    console.log("Raw data:", raw);
     
     // Check if raw is valid
     if (!raw || typeof raw !== 'object') {
@@ -131,37 +123,17 @@ export class GenreScriptFetcher {
 
     // Handle array format (new Suno API structure)
     if (Array.isArray(raw)) {
-      console.log("Detected array format - using new parsing logic");
-      console.log("Array length:", raw.length);
-      console.log("First item sample:", raw[0]);
-      console.log("First item keys:", raw[0] ? Object.keys(raw[0]) : "N/A");
-      console.log("Second item sample:", raw[1]);
+
       
       // Group tracks by genre/metadata field
       const genreMap: Record<string, any[]> = {};
       
-      let trackCount = 0;
       for (const track of raw) {
         // Ensure track is an object
         if (!track || typeof track !== 'object') {
           console.warn("Skipping invalid track:", track);
           continue;
         }
-        
-        // Log first few tracks in detail
-        if (trackCount < 3) {
-          console.log(`\n=== Track ${trackCount} Sample ===`);
-          console.log("All keys:", Object.keys(track));
-          console.log("Full track object:", track);
-          
-          // Check specifically for ID-like fields
-          const idFields = ['id', 'clip_id', 'audio_id', 'track_id', 'song_id', 'uid'];
-          console.log("ID field check:");
-          idFields.forEach(field => {
-            console.log(`  ${field}:`, (track as any)[field]);
-          });
-        }
-        trackCount++;
         
         // Try to extract genre from various possible fields
         let genre = "All Tracks"; // Default genre if none found
@@ -181,15 +153,11 @@ export class GenreScriptFetcher {
         
         if (!genreMap[genre]) {
           genreMap[genre] = [];
-          console.log(`Created new genre group: "${genre}"`);
         }
         genreMap[genre].push(track);
       }
       
-      console.log(`\nTotal tracks processed: ${trackCount}`);
-      
-      console.log("Genre map keys:", Object.keys(genreMap));
-      console.log("Tracks per genre:", Object.entries(genreMap).map(([g, t]) => `${g}: ${t.length}`));
+
       
       return Object.entries(genreMap).map(([genre, tracks]) => {
         // Group by title (without optional version suffix like " v1")
@@ -233,7 +201,7 @@ export class GenreScriptFetcher {
     }
 
     // Handle object format (old Suno API structure)
-    console.log("Detected object format - using legacy parsing logic");
+
     return Object.entries(raw as Record<string, { id: string; title?: string; name?: string }[]>).map(([genre, tracks]) => {
       // Group by title (without optional version suffix like " v1")
       const grouped: Record<
